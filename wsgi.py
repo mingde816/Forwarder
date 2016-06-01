@@ -10,7 +10,7 @@
   timeout: [可选]超时时间，默认为30s
  """
 
-__Version__ = "1.2.1"
+__Version__ = "1.2.4"
 __Author__ = "cdhigh <https://github.com/cdhigh>"
 
 from wsgiref.util import is_hop_by_hop
@@ -29,7 +29,7 @@ def Home():
         return 'Auth Key is invalid!'
     
     if url and k:
-        url = urllib.unquote(url)
+        url = urllib.unquote(url.encode('utf-8')).replace(' ', r'%20')
         try:
             req = urllib2.Request(url)
             req.add_header('User-Agent', "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)")
@@ -37,14 +37,14 @@ def Home():
             ret = urllib2.urlopen(req, timeout=timeout)
             content = ret.read()
             headers = [(n,v) for n,v in ret.info().items() if not is_hop_by_hop(n)]
-            cookieadded = False
-            for n,v in headers:
-                if n == 'Set-Cookie' and cookieadded:
+            cookieAdded = False
+            for n, v in headers:
+                if n == 'Set-Cookie' and cookieAdded:
                     resp.add_header(n, v)
                 else:
                     resp.set_header(n, v)
                     if n == 'Set-Cookie':
-                        cookieadded = True
+                        cookieAdded = True
             return content
         except socket.timeout:
             pass
@@ -52,8 +52,8 @@ def Home():
             print("ERR : %s : %s" % (type(e), str(e)))
             bottle.abort(400)
     else:
-        return "<html><head><title>Forwarder Url</title></head><body>Forwarder : thisurl?k=AUTHKEY&t=timeout&u=url</body></html>"
+        return "<html><head><title>Forwarder Url</title></head><body>Forwarder(%s) : thisurl?k=AUTHKEY&t=timeout&u=url</body></html>" % __Version__
 
 if __name__ == '__main__':
-    #bottle.run(app, reloader=True) #for debug in computer
+    #bottle.run(reloader=True) #for debug in computer
     bottle.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000))) #for Heroku
